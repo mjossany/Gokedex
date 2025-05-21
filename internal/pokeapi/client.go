@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/mjossany/Gokedex/internal/pokecache"
 )
 
 const (
@@ -13,13 +15,15 @@ const (
 
 type PokeApiClient struct {
 	httpClient http.Client
+	cache      pokecache.Cache
 }
 
-func NewPokeApiClient(timeout time.Duration) *PokeApiClient {
+func NewPokeApiClient(timeout time.Duration, cache pokecache.Cache) *PokeApiClient {
 	return &PokeApiClient{
 		httpClient: http.Client{
 			Timeout: timeout,
 		},
+		cache: cache,
 	}
 }
 
@@ -31,6 +35,16 @@ func (c *PokeApiClient) ListLocations(pageURL *string) (RespShallowLocations, er
 	url := baseURL + "/location-area"
 	if pageURL != nil {
 		url = *pageURL
+	}
+
+	cachedData, found := c.cache.Get(url)
+	if found {
+		locationResp := RespShallowLocations{}
+		err := json.Unmarshal(cachedData, &locationResp)
+		if err != nil {
+			return RespShallowLocations{}, err
+		}
+		return locationResp, nil
 	}
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -48,6 +62,8 @@ func (c *PokeApiClient) ListLocations(pageURL *string) (RespShallowLocations, er
 	if err != nil {
 		return RespShallowLocations{}, err
 	}
+
+	c.cache.Add(url, data)
 
 	locationResp := RespShallowLocations{}
 	err = json.Unmarshal(data, &locationResp)
