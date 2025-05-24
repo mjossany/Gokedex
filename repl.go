@@ -7,12 +7,14 @@ import (
 	"strings"
 
 	"github.com/mjossany/Gokedex/internal/pokeapi"
+	"github.com/mjossany/Gokedex/internal/pokedex"
 )
 
 type config struct {
 	pokeapiClient        pokeapi.PokeApi
 	nextLocationsURL     *string
 	previousLocationsURL *string
+	pokedex              *pokedex.Pokedex
 }
 
 func startRepl(cfg *config) {
@@ -28,9 +30,14 @@ func startRepl(cfg *config) {
 
 		commandName := words[0]
 
+		var secondArgument *string
+		if len(words) > 1 {
+			secondArgument = &words[1]
+		}
+
 		command, exists := getCommands()[commandName]
 		if exists {
-			err := command.callback(cfg)
+			err := command.callback(cfg, secondArgument)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -52,7 +59,7 @@ func cleanInput(text string) []string {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, *string) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -76,6 +83,26 @@ func getCommands() map[string]cliCommand {
 			name:        "mapb",
 			description: "list previous location areas",
 			callback:    commandMapb,
+		},
+		"explore": {
+			name:        "explore",
+			description: "list pokemons encounters from a specific area",
+			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "catch a specific pokemon",
+			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "display pokemon information",
+			callback:    commandInspect,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "display all caught pokemons",
+			callback:    commandPokedex,
 		},
 	}
 }

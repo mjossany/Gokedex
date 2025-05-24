@@ -5,6 +5,7 @@ import (
 
 	"github.com/mjossany/Gokedex/internal/pokeapi"
 	"github.com/mjossany/Gokedex/internal/pokecache"
+	"github.com/mjossany/Gokedex/internal/pokedex"
 )
 
 func main() {
@@ -12,8 +13,10 @@ func main() {
 	appCache := pokecache.NewCache(cacheInterval)
 
 	pokeApi := pokeapi.NewPokeApiClient(5*time.Second, *appCache)
+	pokedex := pokedex.NewPokedex()
 	cfg := &config{
 		pokeapiClient: pokeApi,
+		pokedex:       pokedex,
 	}
 	startRepl(cfg)
 }
